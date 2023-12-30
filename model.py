@@ -58,13 +58,15 @@ class PositionalEmbedding(nn.Module):
             strip_width: the width of the strips
             
             dim_feature: the feature dimension
+            
+            device: the device that runs the program
         """
         super().__init__()
         
         self.seq_len = int(img_width / strip_width) + 1
-        self.encoding = torch.zeros(self.seq_len, dim_feature, requires_grad=False)
-        pos = torch.arange(0, self.seq_len).float().unsqueeze(dim=1)
-        _2i = torch.arange(0, dim_feature, step=2).float()
+        self.encoding = torch.zeros(self.seq_len, dim_feature, requires_grad=False, device=device)
+        pos = torch.arange(0, self.seq_len, device=device).float().unsqueeze(dim=1)
+        _2i = torch.arange(0, dim_feature, step=2, device=device).float()
         self.encoding[:, 0::2] = torch.sin(pos / (10000 ** (_2i / dim_feature)))
         self.encoding[:, 1::2] = torch.cos(pos / (10000 ** (_2i / dim_feature)))
         
@@ -89,6 +91,7 @@ class SpeechTransformer(nn.Module):
         dim_feature,
         num_head,
         num_layers,
+        device,
         dropout=0.1
         ):
         """
@@ -119,7 +122,8 @@ class SpeechTransformer(nn.Module):
         self.positional_embed = PositionalEmbedding(
             img_width=img_width,
             strip_width=strip_width,
-            dim_feature=dim_feature
+            dim_feature=dim_feature,
+            device=device
         )
         self.encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(
